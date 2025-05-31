@@ -1,0 +1,18 @@
+[project]
+name = "fastmcp-exceptions"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastmcp>=2.5.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=1.0.0",
+    "pytest>=8.3.5",
+]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"  # fix deprecation warning
