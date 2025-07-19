@@ -35,12 +35,46 @@ class Amount(Enum):
     TWO="2"
 
 
-server = FastMCP("Enum schema")
+# server = FastMCP("Enum schema")
 
-@server.tool
-def annotated_enum_tool(quantity: Annotated[Amount, Field(description="The quantity annotation.")]) -> str:
-    """An annotated quantity."""
-    return f"Received {quantity}"
+#   @server.tool
+#   def annotated_enum_tool(quantity: Annotated[Amount, Field(description="The quantity annotation.")]) -> str:
+#       """An annotated quantity."""
+#       return f"Received {quantity}"
+
+
+#
+# Empty server
+
+#   Generates empty components objects; but not, for example `completions: {}`.
+#
+#   Spec language is the same.
+#
+
+
+server = FastMCP("Empty", version="1.2.3")
+
+#   {
+#     "capabilities": {
+#       "experimental": {},
+#       "prompts": {
+#         "listChanged": false
+#       },
+#       "resources": {
+#         "subscribe": false,
+#         "listChanged": false
+#       },
+#       "tools": {
+#         "listChanged": true
+#       }
+#     },
+#     "serverInfo": {
+#       "name": "Empty",
+#       "version": "1.2.3"
+#     }
+#   }
+
+
 
 def main():
     server.run()
