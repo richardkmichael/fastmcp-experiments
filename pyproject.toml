@@ -8,10 +8,39 @@ dependencies = [
     "fastmcp>=2.5.2",
 ]
 
+# Development tool configuration
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501", # line too long (handled by formatter)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["mcp_toolbox"]
+
 [dependency-groups]
 dev = [
     "pytest-asyncio>=1.0.0",
     "pytest>=8.3.5",
+    "ruff>=0.12.4",
 ]
 
 [tool.pytest.ini_options]
