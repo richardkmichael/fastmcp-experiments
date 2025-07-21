@@ -1,10 +1,9 @@
+import main
 import pytest
 from fastmcp import Client
 
 # from fastmcp.exceptions import ResourceError
 from fastmcp.exceptions import McpError, ToolError
-
-import main
 
 
 @pytest.fixture
