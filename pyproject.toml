@@ -1,11 +1,11 @@
 [project]
-name = "fastmcp-exceptions"
+name = "fastmcp-experiments"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "fastmcp>=2.5.2",
+    "fastmcp",
 ]
 
 # Development tool configuration
@@ -33,9 +33,6 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
-[tool.ruff.lint.isort]
-known-first-party = ["mcp_toolbox"]
-
 [dependency-groups]
 dev = [
     "pytest-asyncio>=1.0.0",
@@ -45,3 +42,6 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"  # fix deprecation warning
+
+[tool.uv.sources]
+fastmcp = { path = "../fastmcp", editable = true }

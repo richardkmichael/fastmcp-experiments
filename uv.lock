@@ -198,8 +198,7 @@ wheels = [
 
 [[package]]
 name = "fastmcp"
-version = "2.10.6"
-source = { registry = "https://pypi.org/simple" }
+source = { editable = "../fastmcp" }
 dependencies = [
     { name = "authlib" },
     { name = "cyclopts" },
@@ -212,13 +211,48 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/00/a0/eceb88277ef9e3a442e099377a9b9c29fb2fa724e234486e03a44ca1c677/fastmcp-2.10.6.tar.gz", hash = "sha256:5a7b3301f9f1b64610430caef743ac70175c4b812e1949f037e4db65b0a42c5a", size = 1640538, upload-time = "2025-07-19T20:02:12.543Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/dc/05/4958cccbe862958d862b6a15f2d10d2f5ec3c411268dcb131a433e5e7a0d/fastmcp-2.10.6-py3-none-any.whl", hash = "sha256:9782416a8848cc0f4cfcc578e5c17834da620bef8ecf4d0daabf5dd1272411a2", size = 202613, upload-time = "2025-07-19T20:02:11.47Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "authlib", specifier = ">=1.5.2" },
+    { name = "cyclopts", specifier = ">=3.0.0" },
+    { name = "exceptiongroup", specifier = ">=1.2.2" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "mcp", specifier = ">=1.10.0" },
+    { name = "openapi-pydantic", specifier = ">=0.5.1" },
+    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
+    { name = "pyperclip", specifier = ">=1.9.0" },
+    { name = "python-dotenv", specifier = ">=1.1.0" },
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "websockets", marker = "extra == 'websockets'", specifier = ">=15.0.1" },
+]
+provides-extras = ["websockets"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "copychat", specifier = ">=0.5.2" },
+    { name = "dirty-equals", specifier = ">=0.9.0" },
+    { name = "fastapi", specifier = ">=0.115.12" },
+    { name = "ipython", specifier = ">=8.12.3" },
+    { name = "pdbpp", specifier = ">=0.10.3" },
+    { name = "pre-commit" },
+    { name = "pyinstrument", specifier = ">=5.0.2" },
+    { name = "pyperclip", specifier = ">=1.9.0" },
+    { name = "pyright", specifier = ">=1.1.389" },
+    { name = "pytest", specifier = ">=8.3.3" },
+    { name = "pytest-asyncio", specifier = ">=0.23.5" },
+    { name = "pytest-cov", specifier = ">=6.1.1" },
+    { name = "pytest-env", specifier = ">=1.1.5" },
+    { name = "pytest-flakefinder" },
+    { name = "pytest-httpx", specifier = ">=0.35.0" },
+    { name = "pytest-report", specifier = ">=0.2.1" },
+    { name = "pytest-timeout", specifier = ">=2.4.0" },
+    { name = "pytest-xdist", specifier = ">=3.6.1" },
+    { name = "ruff" },
 ]
 
 [[package]]
-name = "fastmcp-exceptions"
+name = "fastmcp-experiments"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
@@ -233,7 +267,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastmcp", specifier = ">=2.5.2" }]
+requires-dist = [{ name = "fastmcp", editable = "../fastmcp" }]
 
 [package.metadata.requires-dev]
 dev = [
