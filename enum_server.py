@@ -1,8 +1,8 @@
 # Works with PR# 1192
-import fastmcp
 from fastmcp import FastMCP
 
-fastmcp.settings.dereference_json_schemas = True
+#   import fastmcp
+#   fastmcp.settings.dereference_json_schemas = True
 
 #
 # Integer enum schema bug
@@ -16,12 +16,12 @@ from pydantic import Field
 
 class Amount(Enum):
     # Works with dereferenced schema
-    ONE = 1
-    TWO = 2
+    #   ONE = 1
+    #   TWO = 2
 
     # String works:
-    #   ONE="1"
-    #   TWO="2"
+    ONE="1"
+    TWO="2"
 
 
 server = FastMCP("Enum schema")
