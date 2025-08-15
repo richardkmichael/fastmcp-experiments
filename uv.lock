@@ -229,7 +229,8 @@ wheels = [
 
 [[package]]
 name = "fastmcp"
-source = { editable = "../fastmcp" }
+version = "2.11.4.dev1+3dcf2c3"
+source = { git = "file:///Users/rmichael/Documents/Personal/Source/fastmcp/fastmcp?branch=middleware-initialization#3dcf2c3f9fa87ae85ecaaab90ba5865327130947" }
 dependencies = [
     { name = "authlib" },
     { name = "cyclopts" },
@@ -242,46 +243,6 @@ dependencies = [
     { name = "pyperclip" },
     { name = "python-dotenv" },
     { name = "rich" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "authlib", specifier = ">=1.5.2" },
-    { name = "cyclopts", specifier = ">=3.0.0" },
-    { name = "exceptiongroup", specifier = ">=1.2.2" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "mcp", specifier = ">=1.12.4,<2.0.0" },
-    { name = "openapi-core", specifier = ">=0.19.5" },
-    { name = "openapi-pydantic", specifier = ">=0.5.1" },
-    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
-    { name = "pyperclip", specifier = ">=1.9.0" },
-    { name = "python-dotenv", specifier = ">=1.1.0" },
-    { name = "rich", specifier = ">=13.9.4" },
-    { name = "websockets", marker = "extra == 'websockets'", specifier = ">=15.0.1" },
-]
-provides-extras = ["websockets"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "copychat", specifier = ">=0.5.2" },
-    { name = "dirty-equals", specifier = ">=0.9.0" },
-    { name = "fastapi", specifier = ">=0.115.12" },
-    { name = "ipython", specifier = ">=8.12.3" },
-    { name = "pdbpp", specifier = ">=0.10.3" },
-    { name = "pre-commit" },
-    { name = "pyinstrument", specifier = ">=5.0.2" },
-    { name = "pyperclip", specifier = ">=1.9.0" },
-    { name = "pyright", specifier = ">=1.1.389" },
-    { name = "pytest", specifier = ">=8.3.3" },
-    { name = "pytest-asyncio", specifier = ">=0.23.5" },
-    { name = "pytest-cov", specifier = ">=6.1.1" },
-    { name = "pytest-env", specifier = ">=1.1.5" },
-    { name = "pytest-flakefinder" },
-    { name = "pytest-httpx", specifier = ">=0.35.0" },
-    { name = "pytest-report", specifier = ">=0.2.1" },
-    { name = "pytest-timeout", specifier = ">=2.4.0" },
-    { name = "pytest-xdist", specifier = ">=3.6.1" },
-    { name = "ruff" },
 ]
 
 [[package]]
@@ -300,7 +261,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastmcp", editable = "../fastmcp" }]
+requires-dist = [{ name = "fastmcp", git = "file:///Users/rmichael/Documents/Personal/Source/fastmcp/fastmcp?branch=middleware-initialization" }]
 
 [package.metadata.requires-dev]
 dev = [

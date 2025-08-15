@@ -44,4 +44,7 @@ dev = [
 asyncio_default_fixture_loop_scope = "function"  # fix deprecation warning
 
 [tool.uv.sources]
-fastmcp = { path = "../fastmcp", editable = true }
+# fastmcp = { path = "../fastmcp", editable = true }
+
+# middleware-initialization is currently on 2.11.3
+fastmcp = { git = "git+file:///Users/rmichael/Documents/Personal/Source/fastmcp/fastmcp", branch = "middleware-initialization" }
