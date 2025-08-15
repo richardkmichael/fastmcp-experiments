@@ -17,11 +17,11 @@ from pydantic import Field
 from dereference_for_claude_middleware import DereferenceForClaudeMiddleware
 from initialization_logging_middleware import InitializationLoggingMiddleware
 
-# Configure logging
+# Adjust the global logging; will affect both middlewares, so they write to the same file
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    filename="tmp/logging-middleware.log",
+    filename="tmp/client_aware_server.log",
     filemode="a",
 )
 
