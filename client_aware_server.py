@@ -15,7 +15,6 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from dereference_for_claude_middleware import DereferenceForClaudeMiddleware
-from initialization_logging_middleware import InitializationLoggingMiddleware
 
 # Adjust the global logging; will affect both middlewares, so they write to the same file
 logging.basicConfig(
@@ -38,7 +37,6 @@ class Amount(Enum):
 server = FastMCP("ClientAwareMiddlewareDemo", version="1.0.0")
 
 
-server.add_middleware(InitializationLoggingMiddleware())
 server.add_middleware(DereferenceForClaudeMiddleware())
 
 
