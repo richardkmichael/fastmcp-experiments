@@ -27,7 +27,7 @@ class DereferenceForClaudeMiddleware(Middleware):
     """
 
     def __init__(self):
-        pass
+        logger.info("Server configured with DereferenceForClaudeMiddleware")
 
     def _is_claude_client(self, client_name: str) -> bool:
         """Check if the client is a Claude client that needs schema dereferencing."""
@@ -212,10 +212,12 @@ class DereferenceForClaudeMiddleware(Middleware):
             context.session.is_claude_client = is_claude_client
 
         if is_claude_client:
-            logger.info(f"Claude ({client_name}) detected - will dereference schemas")
+            logger.info(
+                f"on_initialize: 🤖 {client_name} detected - schemas will be dereferenced"
+            )
         else:
             logger.info(
-                f"Non-Claude ({client_name}) detected - schemas will remain unchanged"
+                f"on_initialize: {client_name} detected - schemas will be unchanged"
             )
 
         return await call_next(context)
