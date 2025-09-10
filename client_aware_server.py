@@ -4,7 +4,28 @@ Initialization Middleware Demo
 This demonstrates FastMCP's new ability to intercept MCP initialization
 requests through middleware, in addition to regular tool calls.
 
-Depends on modifications to FastMCP.
+Depends on modifications to FastMCP:
+
+  1. Edit pyproject.toml, as below
+  2. Re-install dependencies: `uv sync --no-cache --reinstall`
+
+```toml
+
+# pyproject.toml
+
+# Remove version specification from `fastmcp`
+dependencies = [
+    "fastmcp",
+]
+
+# Set fastmcp source to local branch
+[tool.uv.sources]
+# fastmcp = { path = "../fastmcp", editable = true }
+
+# middleware-initialization is currently on 2.11.3
+fastmcp = { git = "git+file:///Users/rmichael/Documents/Personal/Source/fastmcp/fastmcp", branch = "middleware-initialization" }
+```
+
 """
 
 import logging
