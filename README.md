@@ -1,6 +1,6 @@
 # FastMCP Experiments
 
-Uses FastMCP from a local path (`../fastmcp`).
+The `client_aware_server.py` requires FastMCP from a local path (`../fastmcp`); see `pyproject.toml`.
 
 
 MCP JSON helper:
@@ -19,6 +19,27 @@ make-mcp-json() {
 Then:
 
 ```
-make-mcp-json <SERVER>.py
-claude --mcp-config tmp/<SERVER>.json
+make-mcp-json <SOME_SERVER>.py
 ```
+
+# Claude Code
+
+## Add with CLI
+
+`claude mcp add [name] uv -- --directory $CWD run <SOME_SERVER>.py`
+
+## Run via `.mcp.json`
+
+Generate an "mcp.json" using the helper (above).
+
+```
+# One
+claude --strict-mcp-config --mcp-config tmp/some_server.json
+
+# All
+claude --strict-mcp-config --mcp-config tmp/all_servers.json
+```
+
+# MCP Inspector
+
+`npx @modelcontextprotocol/inspector --config /tmp/some_server.json`

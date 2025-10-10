@@ -30,6 +30,7 @@ fastmcp = { git = "git+file:///Users/rmichael/Documents/Personal/Source/fastmcp/
 
 import logging
 from enum import Enum
+from importlib.metadata import version
 from typing import Annotated
 
 from fastmcp import FastMCP
@@ -55,7 +56,7 @@ class Amount(Enum):
 
 
 # Create server
-server = FastMCP("ClientAwareMiddlewareDemo", version="1.0.0")
+server = FastMCP(name="ClientAwareMiddlewareDemo", version=version("fastmcp-experiments"))
 
 
 server.add_middleware(DereferenceForClaudeMiddleware())
