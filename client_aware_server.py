@@ -37,8 +37,12 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from dereference_for_claude_middleware import DereferenceForClaudeMiddleware
+from dereference_for_claude_middleware import DereferenceForClaudeMiddlewareSubclass
+from dereference_for_claude_middleware import DereferenceForClaudeMiddlewareSimple
 
-# Adjust the global logging; will affect both middlewares, so they write to the same file
+# from fastmcp.server.middleware.schema_dereference import SchemaDereferenceMiddleware
+
+# Adjust the global logging; will affect middlewares, so they write to the same file
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -59,7 +63,11 @@ class Amount(Enum):
 server = FastMCP(name="ClientAwareMiddlewareDemo", version=version("fastmcp-experiments"))
 
 
-server.add_middleware(DereferenceForClaudeMiddleware())
+# server.add_middleware(DereferenceForClaudeMiddleware())
+# server.add_middleware(DereferenceForClaudeMiddlewareSubclass())
+server.add_middleware(DereferenceForClaudeMiddlewareSimple())
+
+# server.add_middleware(SchemaDereferenceMiddleware())
 
 
 @server.tool

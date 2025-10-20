@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+# Tolerate imports throughout the file, not requiring them at the top; useful for experimental code
+# ruff: noqa: E402
 """
 DereferenceForClaudeMiddleware
 
@@ -13,203 +14,42 @@ schemas in tool, prompt, and resource responses.
 
 import logging
 from copy import deepcopy
-from typing import Any
-
-from fastmcp.server.middleware import Middleware, MiddlewareContext
 
 logger = logging.getLogger(__name__)
 
+from fastmcp.server.middleware import Middleware, MiddlewareContext
+from fastmcp.server.middleware.schema_dereference import dereference_json_schema
+
 
 class DereferenceForClaudeMiddleware(Middleware):
-    """
-    Middleware that automatically dereferences JSON schemas for Claude clients
-    to fix compatibility issues with $ref references.
-    """
-
     def __init__(self):
         logger.info("Server configured with DereferenceForClaudeMiddleware")
+
+    def _get_client_name(self, context: MiddlewareContext) -> str:
+        """Extract client name from initialize request context."""
+        params = getattr(context.message, "params", None)
+        client_info = getattr(params, "clientInfo", None) if params else None
+        return getattr(client_info, "name", "unknown") if client_info else "unknown"
 
     def _is_claude_client(self, client_name: str) -> bool:
         """Check if the client is a Claude client that needs schema dereferencing."""
         return client_name in [
             "claude-desktop",
             "claude-code",
-            "mcp-inspector",
+            "inspector-client",
         ]
-
-    # === Schema Dereferencing Implementation: extracted from deref-schema PR
-
-    @staticmethod
-    def _detect_self_reference(schema: dict) -> bool:
-        """
-        Detect if the schema contains self-referencing definitions.
-
-        Args:
-            schema: The JSON schema to check
-
-        Returns:
-            True if self-referencing is detected
-        """
-        defs = schema.get("$defs", {})
-
-        def find_refs_in_value(value: Any, parent_def: str) -> bool:
-            """Check if a value contains a reference to its parent definition."""
-            if isinstance(value, dict):
-                if "$ref" in value:
-                    ref_path = value["$ref"]
-                    # Check if this references the parent definition
-                    if ref_path == f"#/$defs/{parent_def}":
-                        return True
-                # Check all values in the dict
-                for v in value.values():
-                    if find_refs_in_value(v, parent_def):
-                        return True
-            elif isinstance(value, list):
-                # Check all items in the list
-                for item in value:
-                    if find_refs_in_value(item, parent_def):
-                        return True
-            return False
-
-        # Check each definition for self-reference
-        for def_name, def_content in defs.items():
-            if find_refs_in_value(def_content, def_name):
-                # Self-reference detected, return original schema
-                return True
-
-        return False
-
-    @staticmethod
-    def dereference_json_schema(
-        schema: dict, max_depth: int = 5, strip_defs: bool = True
-    ) -> dict:
-        """
-        Dereference a JSON schema by resolving $ref references.
-
-        This function flattens schema properties by:
-        1. Check for self-reference - if found, return original schema
-        2. When encountering $refs in properties, resolve them on-demand
-        3. Track visited definitions globally to prevent circular expansion
-        4. Optionally remove $defs if strip_defs=True (default)
-
-        Args:
-            schema: The JSON schema to flatten
-            max_depth: Maximum depth for resolving references (default: 5)
-            strip_defs: Remove $defs section after dereferencing (default: True)
-
-        Returns:
-            Schema with references resolved and optionally $defs removed
-        """
-        # Step 1: Check for self-reference
-        if DereferenceForClaudeMiddleware._detect_self_reference(schema):
-            # Self-referencing detected, return original schema
-            return schema
-
-        # Make a deep copy to work with
-        result = deepcopy(schema)
-
-        # Keep original $defs for the final result
-        defs = deepcopy(schema.get("$defs", {}))
-
-        # Step 2: Define resolution function that tracks visits globally
-        def resolve_refs_in_value(value: Any, depth: int, visiting: set[str]) -> Any:
-            """
-            Recursively resolve $refs in a value.
-
-            Args:
-                value: The value to process
-                depth: Current depth in resolution
-                visiting: Set of definitions currently being resolved (for cycle detection)
-
-            Returns:
-                Value with $refs resolved (or kept if max depth reached)
-            """
-            if depth >= max_depth:
-                return value
-
-            if isinstance(value, dict):
-                if "$ref" in value:
-                    ref_path = value["$ref"]
-
-                    # Only handle internal references to $defs
-                    if ref_path.startswith("#/$defs/"):
-                        def_name = ref_path.split("/")[-1]
-
-                        # Check for circular reference
-                        if def_name in visiting:
-                            # Circular reference detected, keep the $ref
-                            return value
-
-                        if def_name in defs:
-                            # Add to visiting set
-                            visiting.add(def_name)
-
-                            # Get the definition and resolve any refs within it
-                            resolved = resolve_refs_in_value(
-                                deepcopy(defs[def_name]), depth + 1, visiting
-                            )
-
-                            # Remove from visiting set
-                            visiting.remove(def_name)
-
-                            # Merge resolved definition with additional properties
-                            # Additional properties from the original object take precedence
-                            for key, val in value.items():
-                                if key != "$ref":
-                                    resolved[key] = val
-
-                            return resolved
-                        else:
-                            # Definition not found, keep the $ref
-                            return value
-                    else:
-                        # External ref or other type - keep as is
-                        return value
-                else:
-                    # Regular dict - process all values
-                    return {
-                        key: resolve_refs_in_value(val, depth, visiting)
-                        for key, val in value.items()
-                    }
-            elif isinstance(value, list):
-                # Process each item in the list
-                return [resolve_refs_in_value(item, depth, visiting) for item in value]
-            else:
-                # Primitive value - return as is
-                return value
-
-        # Step 3: Process main schema properties with shared visiting set
-        for key, value in result.items():
-            if key != "$defs":
-                # Each top-level property gets its own visiting set
-                # This allows the same definition to be used in different contexts
-                result[key] = resolve_refs_in_value(value, 0, set())
-
-        # Step 4: Optionally preserve or remove $defs
-        if strip_defs:
-            # Remove $defs since all references have been dereferenced
-            result.pop("$defs", None)
-        else:
-            # Preserve original $defs
-            if "$defs" in schema:
-                result["$defs"] = defs
-
-        return result
 
     # === Middleware Hooks ===
 
     async def on_initialize(self, context: MiddlewareContext, call_next):
-        """Detect Claude clients and store on session object."""
-        client_info = getattr(context.message, "clientInfo", None)
-        client_name = (
-            getattr(client_info, "name", "unknown") if client_info else "unknown"
-        )
-
+        """Detect Claude clients and store client type in context state."""
+        client_name = self._get_client_name(context)
         is_claude_client = self._is_claude_client(client_name)
 
-        # HACK: Store client type directly on session object
-        if hasattr(context, "session") and context.session:
-            context.session.is_claude_client = is_claude_client
+        # Store client type in context state for use in subsequent hooks
+        if context.fastmcp_context:
+            context.fastmcp_context.set_state("client_name", client_name)
+            context.fastmcp_context.set_state("is_claude_client", is_claude_client)
 
         if is_claude_client:
             logger.info(
@@ -226,19 +66,206 @@ class DereferenceForClaudeMiddleware(Middleware):
         """Dereference tool schemas for Claude clients."""
         tools = await call_next(context)
 
-        # HACK: Read client type from session object (stored during initialization)
-        is_claude_client = False
-        if context.fastmcp_context and context.fastmcp_context.session:
-            is_claude_client = getattr(
-                context.fastmcp_context.session, "is_claude_client", False
-            )
-
-        if is_claude_client:
+        # Read client type from context state (set during initialization)
+        if context.fastmcp_context and context.fastmcp_context.get_state(
+            "is_claude_client"
+        ):
             for tool in tools:
                 original_schema = deepcopy(tool.parameters)
-                dereferenced_schema = self.dereference_json_schema(tool.parameters)
+                dereferenced_schema = dereference_json_schema(tool.parameters)
 
                 if original_schema != dereferenced_schema:
                     tool.parameters = dereferenced_schema
+
+        return tools
+
+
+# === Subclass implementation ===
+
+from fastmcp.server.middleware.schema_dereference import SchemaDereferenceMiddleware
+
+
+class DereferenceForClaudeMiddlewareSubclass(SchemaDereferenceMiddleware):
+    def __init__(self):
+        logger.info("Server configured with DereferenceForClaudeMiddlewareSubclass")
+
+    def _get_client_name(self, context: MiddlewareContext) -> str:
+        """Extract client name from initialize request context."""
+        params = getattr(context.message, "params", None)
+        client_info = getattr(params, "clientInfo", None) if params else None
+        return getattr(client_info, "name", "unknown") if client_info else "unknown"
+
+    def _is_claude_client(self, client_name: str) -> bool:
+        """Check if the client is a Claude client that needs schema dereferencing."""
+        return client_name in [
+            "claude-desktop",
+            "claude-code",
+            "inspector-client",
+        ]
+
+    # === Middleware Hooks ===
+
+    async def on_initialize(self, context: MiddlewareContext, call_next):
+        """Detect Claude clients and store client type in context state."""
+        client_name = self._get_client_name(context)
+        is_claude_client = self._is_claude_client(client_name)
+
+        # Store client type in context state for use in subsequent hooks
+        if context.fastmcp_context:
+            context.fastmcp_context.set_state("client_name", client_name)
+            context.fastmcp_context.set_state("is_claude_client", is_claude_client)
+
+        if is_claude_client:
+            logger.info(
+                f"on_initialize: 🤖 {client_name} detected - schemas will be dereferenced"
+            )
+        else:
+            logger.info(
+                f"on_initialize: {client_name} detected - schemas will be unchanged"
+            )
+
+        return await call_next(context)
+
+    # If Claude, use parent class dereferencing
+    async def on_list_tools(self, context: MiddlewareContext, call_next):
+        """Dereference tool schemas for Claude clients."""
+
+        # Read client type from context state (set during initialization)
+        if context.fastmcp_context and context.fastmcp_context.get_state(
+            "is_claude_client"
+        ):
+            return await super().on_list_tools(context, call_next)
+        else:
+            return await call_next(context)
+
+
+from dataclasses import asdict
+from pprint import pformat
+
+from jsonref import JsonRefError, replace_refs
+
+
+class DereferenceForClaudeMiddlewareSimple(Middleware):
+    def __init__(self):
+        logger.info("Server configured with DereferenceForClaudeMiddlewareSimple")
+
+    def _get_client_name(self, context: MiddlewareContext) -> str:
+        """Extract client name from initialize request context."""
+        params = getattr(context.message, "params", None)
+        client_info = getattr(params, "clientInfo", None) if params else None
+        return getattr(client_info, "name", "unknown") if client_info else "unknown"
+
+    def _is_claude_client(self, client_name: str) -> bool:
+        """Check if the client is a Claude client that needs schema dereferencing."""
+        return client_name in [
+            "claude-desktop",
+            "claude-code",
+            "inspector-client",
+        ]
+
+    def _dereference_tool(self, tool, remove_defs=True):
+        """Dereference a tool's schema, returning the modified tool or None on failure.
+
+        Args:
+            tool: Tool object with parameters schema to dereference
+            remove_defs: If True, remove $defs from schema after dereferencing (default: True)
+        """
+        try:
+            # proxies=False returns plain dicts to ensure compatibility with FastMCP
+            # lazy_load=False resolves immediately
+            dereferenced = replace_refs(tool.parameters, proxies=False, lazy_load=False)
+
+            # If requested, remove $defs (since all references have been resolved)
+            if remove_defs and isinstance(dereferenced, dict) and "$defs" in dereferenced:
+                dereferenced = {k: v for k, v in dereferenced.items() if k != "$defs"}
+
+            tool.parameters = dereferenced
+            return tool
+
+        except JsonRefError as e:
+            logger.warning(
+                f"Failed to dereference schema for tool '{tool.name}': {e}. "
+                "Tool will be hidden from client."
+            )
+            return None
+        except Exception as e:
+            logger.error(
+                f"Unexpected error dereferencing schema for tool '{tool.name}': {e}. "
+                "Tool will be hidden from client."
+            )
+            return None
+
+    # === Middleware Hooks ===
+
+    async def on_initialize(self, context: MiddlewareContext, call_next):
+        """Detect Claude clients and store client type on the session."""
+
+        # Dump context for debugging, but handle fastmcp_context specially
+        ctx_dict = asdict(context)
+
+        # Replace fastmcp_context with a simple representation to avoid property access
+        if context.fastmcp_context:
+            ctx_dict['fastmcp_context'] = f"<Context object at {hex(id(context.fastmcp_context))}>"
+
+        logger.info(f"on_initialize: Context:\n{pformat(ctx_dict, width=120)}")
+
+        client_name = self._get_client_name(context)
+        is_claude_client = self._is_claude_client(client_name)
+
+        # Store on the SESSION (persists across requests), not context (single request only)
+        # FIXME: Accessing .session causes:
+        # 2025-10-17 12:24:54,443 - root - WARNING - Failed to validate request: Context is not available outside of a request
+        if context.fastmcp_context:
+            session = context.fastmcp_context.session
+            logger.info(
+                f"session: {session}"
+            )
+            setattr(session, "_is_claude_client", is_claude_client)
+            setattr(session, "_client_name", client_name)
+
+        if is_claude_client:
+            logger.info(
+                f"on_initialize: 🤖 {client_name} detected - will dereference schemas"
+            )
+        else:
+            logger.info(
+                f"on_initialize: {client_name} detected - schemas will be unchanged"
+            )
+
+        return await call_next(context)
+
+    async def on_list_tools(self, context: MiddlewareContext, call_next):
+        """Dereference tool schemas for Claude clients using jsonref."""
+
+        # Dump context for debugging, but handle fastmcp_context specially
+        ctx_dict = asdict(context)
+
+        # Replace fastmcp_context with a simple representation to avoid property access
+        if context.fastmcp_context:
+            ctx_dict['fastmcp_context'] = f"<Context object at {hex(id(context.fastmcp_context))}>"
+
+        logger.info(f"on_list_tools: Context:\n{pformat(ctx_dict, width=120)}")
+
+        tools = await call_next(context)
+
+        # Read from SESSION (persists across requests)
+        if context.fastmcp_context:
+            session = context.fastmcp_context.session
+            is_claude_client = getattr(session, "_is_claude_client", False)
+            client_name = getattr(session, "_client_name", "unknown")
+
+            if True: # is_claude_client:
+                logger.info(
+                    f"on_list_tools: 🤖 {client_name} - dereferencing schemas"
+                )
+                tools = [
+                    dereferenced_tool
+                    for tool in tools
+                    if (dereferenced_tool := self._dereference_tool(tool)) is not None
+                ]
+            else:
+                logger.info(
+                    f"on_list_tools: {client_name} - schemas unchanged"
+                )
 
         return tools
